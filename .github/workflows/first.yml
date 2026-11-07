@@ -46,6 +46,11 @@ jobs:
   build_job:
     needs: [lint_job, test_job]
     runs-on: ubuntu-latest
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -62,15 +67,28 @@ jobs:
       - name: Build the app
         run: npm run build
 
-  deploy_job:
-    needs: [lint_job, test_job, build_job]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: dist/
+          retention-days: 7
 
       - name: Install vercel cli
         run: npm install --g vercel
 
       - name: Deployment on vercel
         run: vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+
+#   deploy_job:
+#     needs: [lint_job, test_job, build_job]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Install vercel cli
+#         run: npm install --g vercel
+
+#       - name: Deployment on vercel
+#         run: vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
