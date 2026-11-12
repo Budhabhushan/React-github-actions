@@ -78,7 +78,7 @@ jobs:
         run: npm install --g vercel
 
       - name: Deployment on vercel
-        run: vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy dist --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
 
 #   deploy_job:
 #     needs: [lint_job, test_job, build_job]
