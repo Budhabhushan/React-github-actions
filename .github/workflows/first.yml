@@ -7,20 +7,88 @@ on:
       - dev
       - qa
 jobs:
-  first_job:
+  lint_job:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: install dependencies
-        run: npm install
-
-      - name: Install node js
+      - name: set node js in VM
         uses: actions/setup-node@v3
         with:
           node-version: 24
           cache: "npm"
 
-      - name: Build
+      - name: install dependencies
+        run: npm ci
+
+      - name: Run ESLint in app
+        run: npm run lint
+
+  test_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: set node js in VM
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+  build_job:
+    needs: [lint_job, test_job]
+    runs-on: ubuntu-latest
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets['VERCEL_PROJECT_ID'] }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: set node js in VM
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: Build the app
         run: npm run build
+
+      - name: create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: dist/
+          retention-days: 7
+
+      - name: Install vercel cli
+        run: npm install --g vercel
+
+      - name: Deployment on vercel
+        run: vercel deploy dist --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+
+#   deploy_job:
+#     needs: [lint_job, test_job, build_job]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Install vercel cli
+#         run: npm install --g vercel
+
+#       - name: Deployment on vercel
+#         run: vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
